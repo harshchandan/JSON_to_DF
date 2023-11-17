@@ -22,10 +22,6 @@ from pyspark.sql.functions import explode, col
 
 df1 = df.select("hotel.*")
 
-df1.printSchema()
-
-df1.show()
-
 """***if list [] then explode, if struct {} then col.****"""
 
 rates = df1.select(explode("rates"))
@@ -42,16 +38,10 @@ recommendations_df = recommendations_df.select(col("groupId"),col("id").alias("r
 
 rates_df = rates_df.withColumnRenamed("id","rates_id")
 
-rates_df.show(2)
-
 occupancies_df = rates_df.select(col("rates_id").alias("occ_rates_id"),explode("occupancies"))
 occupancies_df = occupancies_df.select("occ_rates_id","col.*")
 
-occupancies_df.show()
-
 rates_occupancies_df = rates_df.join(occupancies_df, rates_df.rates_id == occupancies_df.occ_rates_id, "leftouter")
-
-rooms_df.show(2)
 
 rates_occupancies_df = rates_occupancies_df.drop("occ_rates_id","occupancies")
 
@@ -63,26 +53,20 @@ rates_occ_rooms_recom_df = rates_occupancies_rooms_df.join(recommendations_df, r
 
 rates_occ_rooms_recom_df = rates_occ_rooms_recom_df.drop("recom_rates_id")
 
-rates_occ_rooms_recom_df.show(2)
-
 fin_df = rates_occ_rooms_recom_df.select("rates_id",explode("facilities")).select("rates_id",col("col.*"))
 fin_df = fin_df.withColumnRenamed("name", "facilities").withColumnRenamed("rates_id","fac_rates_id")
 fin_df = rates_occ_rooms_recom_df.join(fin_df, rates_occ_rooms_recom_df.rates_id == fin_df.fac_rates_id, "leftouter")
 fin_df = fin_df.drop("fac_rates_id","facilities")
 
-fin_df.show(2)
-
 fin_df1 = fin_df.select("rates_id",explode("beds")).select("rates_id",col("col.*"))
 fin_df1 = fin_df.withColumnRenamed("rates_id","beds_rates_id").withColumnRenamed("count","bed_count").withColumnRenamed("type","bed_type")
 fin_df1 = fin_df.join(fin_df1, fin_df.rates_id == fin_df1.beds_rates_id, "leftouter")
 fin_df1 = fin_df1.drop("beds_rates_id","beds")
-fin_df1.show(2)
 
 fin_df2 = fin_df1.select("rates_id",explode("taxes")).select("rates_id",col("col.*"))
 #fin_df2 = fin_df1.withColumnRenamed("rates_id","taxes_rates_id")#.withColumnRenamed("count","bed_count").withColumnRenamed("type","bed_type")
 #fin_df2 = fin_df1.join(fin_df1, fin_df.rates_id == fin_df1.beds_rates_id, "leftouter")
 #fin_df2 = fin_df2.drop("beds_rates_id","beds")
-fin_df2.show(2)
 
 columns = ["facilities","beds", "taxes", "policies", "otherrateComponents", "otherProviderRates", "offers", "dailyRates"]
 for i in columns:
